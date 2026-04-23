@@ -29,8 +29,6 @@ export default async function Home() {
     );
   }
 
-  const bottom5 = engineers.slice(-5).reverse();
-
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
       {/* Header */}
@@ -82,26 +80,6 @@ export default async function Home() {
           {top5.map((eng, i) => (
             <EngineerCard key={eng.login} engineer={eng} rank={i + 1} />
           ))}
-        </div>
-      </section>
-
-      {/* Bottom 5 Cards */}
-      <section className="mb-10">
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-          Bottom 5
-        </h2>
-        <div className="grid grid-cols-5 gap-3">
-          {bottom5.map((eng) => {
-            const actualRank =
-              engineers.findIndex((e) => e.login === eng.login) + 1;
-            return (
-              <EngineerCard
-                key={eng.login}
-                engineer={eng}
-                rank={actualRank}
-              />
-            );
-          })}
         </div>
       </section>
 
