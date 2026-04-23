@@ -1,65 +1,102 @@
-import Image from "next/image";
+import { fetchMergedPRs } from "@/lib/github";
+import { computeMetrics } from "@/lib/metrics";
+import { scoreEngineers } from "@/lib/scoring";
+import { EngineerCard } from "@/components/EngineerCard";
+import { ImpactChart } from "@/components/ImpactChart";
+import { TransparencyTable } from "@/components/TransparencyTable";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+export default async function Home() {
+  let prs, metrics, engineers, top5;
+  try {
+    prs = await fetchMergedPRs();
+    metrics = computeMetrics(prs);
+    engineers = scoreEngineers(metrics);
+    top5 = engineers.slice(0, 5);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown error";
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-20 text-center">
+        <h1 className="text-2xl font-bold mb-4">Failed to load data</h1>
+        <p className="text-red-600 font-mono text-sm mb-4">{msg}</p>
+        <p className="text-gray-500 text-sm">
+          Check that GITHUB_TOKEN is set correctly in .env.local with the
+          public_repo scope.
+        </p>
       </main>
-    </div>
+    );
+  }
+
+  return (
+    <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Engineering Impact Dashboard
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          PostHog/posthog &middot; Last 90 days &middot; {prs.length} merged PRs
+          &middot; {metrics.length} engineers
+        </p>
+      </div>
+
+      {/* Top 5 Cards */}
+      <section className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Top 5 Most Impactful Engineers
+        </h2>
+        <div className="grid grid-cols-5 gap-3">
+          {top5.map((eng, i) => (
+            <EngineerCard key={eng.login} engineer={eng} rank={i + 1} />
+          ))}
+        </div>
+      </section>
+
+      {/* Bottom 5 Cards */}
+      <section className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Bottom 5
+        </h2>
+        <div className="grid grid-cols-5 gap-3">
+          {engineers.slice(-5).reverse().map((eng) => (
+            <EngineerCard
+              key={eng.login}
+              engineer={eng}
+              rank={engineers.length - engineers.indexOf(eng)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Chart + Table */}
+      <div className="grid grid-cols-2 gap-4">
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Impact Breakdown
+          </h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <ImpactChart engineers={top5} />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Detailed Metrics
+          </h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 overflow-x-auto">
+            <TransparencyTable engineers={engineers.slice(0, 15)} />
+          </div>
+        </section>
+      </div>
+
+      {/* Footer */}
+      <p className="text-xs text-gray-400 mt-4 text-center">
+        Score = (merged_prs&times;2) + (avg_files&times;0.5) +
+        (high_discussion_prs&times;3) + (reviews_given&times;1.5) +
+        (fast_prs&times;2) + (large_pr_count&times;2), normalized 0&ndash;100
+      </p>
+    </main>
   );
 }
