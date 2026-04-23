@@ -24,7 +24,7 @@ export function TransparencyTable({
           {COLUMNS.map((col) => (
             <th
               key={col.key}
-              className="text-left py-2 px-1.5 font-semibold text-gray-500 cursor-help"
+              className="text-left py-2 px-1.5 font-semibold text-gray-400 cursor-help text-[11px] uppercase tracking-wider"
               title={col.tooltip}
             >
               {col.label}
@@ -36,25 +36,25 @@ export function TransparencyTable({
         {engineers.map((eng, i) => (
           <tr
             key={eng.login}
-            className={`border-b border-gray-100 ${i < 5 ? "bg-blue-50/40" : ""}`}
+            className={`border-b border-gray-100 hover:bg-gray-50 ${i < 5 ? "bg-blue-50/30" : ""}`}
           >
-            <td className="py-1.5 px-1.5 font-medium">
+            <td className="py-2 px-1.5 font-medium">
               <Link
                 href={`/engineer/${eng.login}`}
-                className="hover:text-blue-600"
+                className="hover:text-blue-600 transition-colors duration-150"
               >
                 {eng.name}
               </Link>
             </td>
-            <td className="py-1.5 px-1.5 font-bold text-blue-600">
+            <td className="py-2 px-1.5 font-bold tabular-nums text-blue-600">
               {eng.normalizedScore}
             </td>
-            <td className="py-1.5 px-1.5">{eng.weightedPrCount}</td>
-            <td className="py-1.5 px-1.5">{eng.scopeBreadth}</td>
-            <td className="py-1.5 px-1.5">{eng.avgTimeToMerge}</td>
-            <td className="py-1.5 px-1.5">{eng.substantiveReviews}</td>
-            <td className="py-1.5 px-1.5">{eng.highDiscussionPrs}</td>
-            <td className="py-1.5 px-1.5">
+            <td className="py-2 px-1.5 tabular-nums">{eng.weightedPrCount}</td>
+            <td className="py-2 px-1.5 tabular-nums">{eng.scopeBreadth}</td>
+            <td className="py-2 px-1.5 tabular-nums">{eng.avgTimeToMerge}</td>
+            <td className="py-2 px-1.5 tabular-nums">{eng.substantiveReviews}</td>
+            <td className="py-2 px-1.5 tabular-nums">{eng.highDiscussionPrs}</td>
+            <td className="py-2 px-1.5 tabular-nums">
               {eng.revertedPrs > 0 ? (
                 <span className="text-red-500">{eng.revertedPrs}</span>
               ) : (

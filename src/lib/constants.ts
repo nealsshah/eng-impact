@@ -80,6 +80,32 @@ export function detectPRType(title: string): PRType {
   return "other";
 }
 
+export const CATEGORY_CONFIG: Record<
+  string,
+  { colors: string; description: string }
+> = {
+  Builder: {
+    colors: "bg-blue-100 text-blue-700",
+    description:
+      "Highest score in Product — drives features through high PR volume and broad code changes",
+  },
+  Multiplier: {
+    colors: "bg-purple-100 text-purple-700",
+    description:
+      "Highest score in Leverage — delivers large, complex PRs that spark deep discussion",
+  },
+  Collaborator: {
+    colors: "bg-orange-100 text-orange-700",
+    description:
+      "Highest score in Collaboration — active reviewer who unblocks teammates",
+  },
+  Closer: {
+    colors: "bg-green-100 text-green-700",
+    description:
+      "Highest score in Velocity — ships fast with most PRs merged within 48 hours",
+  },
+};
+
 export const DIMENSION_COLORS = {
   product: "#3b82f6",
   leverage: "#8b5cf6",

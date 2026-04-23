@@ -1,33 +1,8 @@
 "use client";
 
 import { ScoredEngineer } from "@/lib/types";
+import { CATEGORY_CONFIG } from "@/lib/constants";
 import Link from "next/link";
-
-const CATEGORIES: Record<
-  string,
-  { colors: string; description: string }
-> = {
-  Builder: {
-    colors: "bg-blue-100 text-blue-700",
-    description:
-      "Highest score in Product — drives features through high PR volume and broad code changes",
-  },
-  Multiplier: {
-    colors: "bg-purple-100 text-purple-700",
-    description:
-      "Highest score in Leverage — delivers large, complex PRs that spark deep discussion",
-  },
-  Collaborator: {
-    colors: "bg-orange-100 text-orange-700",
-    description:
-      "Highest score in Collaboration — active reviewer who unblocks teammates",
-  },
-  Closer: {
-    colors: "bg-green-100 text-green-700",
-    description:
-      "Highest score in Velocity — ships fast with most PRs merged within 24 hours",
-  },
-};
 
 function GitHubIcon() {
   return (
@@ -49,18 +24,18 @@ export function EngineerCard({
   engineer: ScoredEngineer;
   rank: number;
 }) {
-  const cat = CATEGORIES[engineer.category];
+  const cat = CATEGORY_CONFIG[engineer.category];
 
   return (
     <Link
       href={`/engineer/${engineer.login}`}
-      className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-2 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
+      className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-2 hover:border-gray-300 hover:shadow-md transition-[border-color,box-shadow] duration-200"
     >
       {/* Rank + Category */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-gray-400">#{rank}</span>
         <span
-          className={`text-xs font-medium px-2 py-0.5 rounded-full ${cat.colors}`}
+          className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.colors}`}
           title={cat.description}
         >
           {engineer.category}
@@ -68,23 +43,29 @@ export function EngineerCard({
       </div>
 
       {/* Avatar + Name + GitHub link */}
-      <div className="flex items-center gap-2">
-        {engineer.avatarUrl && (
+      <div className="flex items-center gap-2.5">
+        {engineer.avatarUrl ? (
           <img
             src={engineer.avatarUrl}
-            alt={engineer.name}
-            className="w-8 h-8 rounded-full"
+            alt=""
+            className="w-8 h-8 rounded-full shrink-0"
           />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold truncate">{engineer.name}</p>
-          <p className="text-xs text-gray-400">@{engineer.login}</p>
+          <p className="text-sm font-semibold truncate leading-tight">
+            {engineer.name}
+          </p>
+          <p className="text-xs text-gray-400 leading-tight">
+            @{engineer.login}
+          </p>
         </div>
         <a
           href={`https://github.com/${engineer.login}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-gray-300 hover:text-gray-700 shrink-0"
+          className="text-gray-300 hover:text-gray-600 shrink-0 transition-colors duration-150"
           title={`${engineer.login} on GitHub`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -94,22 +75,22 @@ export function EngineerCard({
 
       {/* Score bar */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-blue-500 rounded-full"
+            className="h-full bg-blue-500 rounded-full score-fill"
             style={{ width: `${engineer.normalizedScore}%` }}
           />
         </div>
-        <span className="text-sm font-bold text-gray-700">
+        <span className="text-xs font-bold text-gray-600 tabular-nums w-6 text-right">
           {engineer.normalizedScore}
         </span>
       </div>
 
       {/* Narrative bullets */}
-      <ul className="text-xs text-gray-600 space-y-0.5">
+      <ul className="text-[11px] text-gray-500 space-y-0.5 leading-snug">
         {engineer.narrative.map((bullet) => (
           <li key={bullet} className="flex gap-1">
-            <span className="text-gray-400 shrink-0">&bull;</span>
+            <span className="text-gray-300 shrink-0">&bull;</span>
             {bullet}
           </li>
         ))}
@@ -117,7 +98,7 @@ export function EngineerCard({
 
       {/* Most impactful PR */}
       <p
-        className="text-xs text-blue-500 truncate mt-auto"
+        className="text-[11px] text-blue-500 truncate mt-auto leading-snug"
         title={engineer.mostImpactfulPr.title}
       >
         Top PR: {engineer.mostImpactfulPr.title}
