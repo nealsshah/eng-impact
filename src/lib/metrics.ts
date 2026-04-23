@@ -1,17 +1,23 @@
 import { GitHubPR, EngineerMetrics, ScoredPR } from "./types";
-import { isBot, MIN_PRS, THRESHOLDS } from "./constants";
+import { isBot, MIN_PRS, THRESHOLDS, detectPRType, PR_TYPE_WEIGHTS } from "./constants";
 
 export function computeMetrics(prs: GitHubPR[]): EngineerMetrics[] {
   const prsByAuthor = new Map<string, GitHubPR[]>();
   const reviewsByReviewer = new Map<string, number>();
+  const substantiveByReviewer = new Map<string, number>();
   const commentsByAuthor = new Map<string, number>();
   const nameMap = new Map<string, string>();
   const avatarMap = new Map<string, string>();
+
+  // Build a map of PR numbers to authors for revert tracking
+  const prNumberToAuthor = new Map<number, string>();
+  const revertedCount = new Map<string, number>();
 
   for (const pr of prs) {
     const login = pr.authorLogin;
     if (isBot(login)) continue;
 
+    prNumberToAuthor.set(pr.number, login);
     nameMap.set(login, pr.author);
     avatarMap.set(login, pr.avatarUrl);
 
@@ -27,10 +33,29 @@ export function computeMetrics(prs: GitHubPR[]): EngineerMetrics[] {
         review.author,
         (reviewsByReviewer.get(review.author) || 0) + 1
       );
-      // Ensure reviewer appears in name/avatar maps
+      // Count substantive reviews (APPROVED / CHANGES_REQUESTED)
+      if (review.state === "APPROVED" || review.state === "CHANGES_REQUESTED") {
+        substantiveByReviewer.set(
+          review.author,
+          (substantiveByReviewer.get(review.author) || 0) + 1
+        );
+      }
       if (!nameMap.has(review.author)) {
         nameMap.set(review.author, review.author);
         avatarMap.set(review.author, "");
+      }
+    }
+  }
+
+  // Track reverts: find PRs whose title references another PR number via "revert"
+  for (const pr of prs) {
+    if (pr.title.toLowerCase().startsWith("revert")) {
+      const match = pr.title.match(/#(\d+)/);
+      if (match) {
+        const origAuthor = prNumberToAuthor.get(parseInt(match[1]));
+        if (origAuthor) {
+          revertedCount.set(origAuthor, (revertedCount.get(origAuthor) || 0) + 1);
+        }
       }
     }
   }
@@ -65,12 +90,37 @@ export function computeMetrics(prs: GitHubPR[]): EngineerMetrics[] {
       (t) => t < THRESHOLDS.fastMergeHours
     ).length;
 
-    // Find most impactful PR (highest changedFiles + discussion)
+    // Scope breadth: count unique scopes from conventional commit titles
+    const scopes = new Set<string>();
+    for (const pr of authorPrs) {
+      const m = pr.title.match(/^\w+\(([^)]+)\)/);
+      if (m) scopes.add(m[1].toLowerCase());
+    }
+
+    // Net lines changed (negative = code cleanup)
+    const netLines = authorPrs.reduce(
+      (s, pr) => s + (pr.additions - pr.deletions),
+      0
+    );
+
+    // PR type breakdown and weighted count
+    const prTypeBreakdown: Record<string, number> = {};
+    let weightedPrCount = 0;
+    for (const pr of authorPrs) {
+      const prType = detectPRType(pr.title);
+      prTypeBreakdown[prType] = (prTypeBreakdown[prType] || 0) + 1;
+      weightedPrCount += PR_TYPE_WEIGHTS[prType];
+    }
+    weightedPrCount = Math.round(weightedPrCount * 10) / 10;
+
+    // Find most impactful PR (highest changedFiles + discussion, weighted by type)
     const mostImpactful = authorPrs.reduce((best, pr) => {
+      const typeWeight = PR_TYPE_WEIGHTS[detectPRType(pr.title)];
       const score =
-        pr.changedFiles + pr.commentCount + pr.reviewCommentCount;
+        (pr.changedFiles + pr.commentCount + pr.reviewCommentCount) * typeWeight;
+      const bestTypeWeight = PR_TYPE_WEIGHTS[detectPRType(best.title)];
       const bestScore =
-        best.changedFiles + best.commentCount + best.reviewCommentCount;
+        (best.changedFiles + best.commentCount + best.reviewCommentCount) * bestTypeWeight;
       return score > bestScore ? pr : best;
     }, authorPrs[0]);
 
@@ -85,7 +135,13 @@ export function computeMetrics(prs: GitHubPR[]): EngineerMetrics[] {
       avgTimeToMerge: Math.round(avgTimeToMerge * 10) / 10,
       fastPrs,
       reviewsGiven: reviewsByReviewer.get(login) || 0,
-      commentsMade: 0, // tracked via PR comments
+      substantiveReviews: substantiveByReviewer.get(login) || 0,
+      scopeBreadth: scopes.size,
+      revertedPrs: revertedCount.get(login) || 0,
+      netLinesChanged: netLines,
+      commentsMade: 0,
+      prTypeBreakdown,
+      weightedPrCount,
       mostImpactfulPr: {
         title: mostImpactful.title,
         url: mostImpactful.url,
@@ -106,6 +162,9 @@ export function scorePRs(prs: GitHubPR[], login: string): ScoredPR[] {
         (1000 * 60 * 60);
 
       const totalDiscussion = pr.commentCount + pr.reviewCommentCount;
+
+      const prType = detectPRType(pr.title);
+      const typeWeight = PR_TYPE_WEIGHTS[prType];
 
       // Score each PR on the same dimensions as the overall formula
       let impactScore = 0;
@@ -147,6 +206,9 @@ export function scorePRs(prs: GitHubPR[], login: string): ScoredPR[] {
       // Base score from size
       impactScore += Math.log2(pr.additions + pr.deletions + 1) * 2;
 
+      // Apply type weight multiplier
+      impactScore *= typeWeight;
+
       // Fallback reason if none triggered
       if (reasons.length === 0) {
         reasons.push(
@@ -166,6 +228,8 @@ export function scorePRs(prs: GitHubPR[], login: string): ScoredPR[] {
         reviewCommentCount: pr.reviewCommentCount,
         timeToMergeHours: Math.round(timeToMergeHours * 10) / 10,
         labels: pr.labels,
+        prType,
+        typeWeight,
         impactScore: Math.round(impactScore * 10) / 10,
         reasons,
       };

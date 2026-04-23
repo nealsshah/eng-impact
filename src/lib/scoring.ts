@@ -4,16 +4,23 @@ import { generateNarrative, assignCategory } from "./narrative";
 
 export function scoreEngineers(engineers: EngineerMetrics[]): ScoredEngineer[] {
   const scored = engineers.map((eng) => {
+    // Use weightedPrCount (type-adjusted) instead of raw mergedPrs
     const product =
-      eng.mergedPrs * WEIGHTS.mergedPrs +
-      eng.avgFilesChanged * WEIGHTS.avgFilesChanged;
+      eng.weightedPrCount * WEIGHTS.mergedPrs +
+      eng.avgFilesChanged * WEIGHTS.avgFilesChanged +
+      eng.scopeBreadth * WEIGHTS.scopeBreadth;
     const leverage =
       eng.largePrCount * WEIGHTS.largePrCount +
-      eng.highDiscussionPrs * WEIGHTS.highDiscussionPrs;
-    const velocity = eng.fastPrs * WEIGHTS.fastPrs;
-    const collaboration = eng.reviewsGiven * WEIGHTS.reviewsGiven;
+      eng.highDiscussionPrs * WEIGHTS.highDiscussionPrs +
+      (eng.netLinesChanged < 0 ? Math.abs(eng.netLinesChanged / 100) * WEIGHTS.codeCleanup : 0);
+    const velocity =
+      eng.fastPrs * WEIGHTS.fastPrs +
+      eng.revertedPrs * WEIGHTS.revertPenalty;
+    const collaboration =
+      eng.reviewsGiven * WEIGHTS.reviewsGiven +
+      eng.substantiveReviews * WEIGHTS.substantiveReviews;
 
-    const rawScore = product + leverage + velocity + collaboration;
+    const rawScore = Math.max(0, product + leverage + velocity + collaboration);
 
     return {
       ...eng,

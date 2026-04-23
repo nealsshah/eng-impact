@@ -14,6 +14,8 @@ export const BOT_LOGINS = new Set([
   "codecov[bot]",
   "vercel[bot]",
   "stale[bot]",
+  "greptile-apps",
+  "mendral-app",
 ]);
 
 export function isBot(login: string): boolean {
@@ -31,9 +33,52 @@ export const WEIGHTS = {
   avgFilesChanged: 0.5,
   highDiscussionPrs: 3,
   reviewsGiven: 1.5,
+  substantiveReviews: 1.0, // bonus for APPROVED/CHANGES_REQUESTED on top of reviewsGiven
   fastPrs: 2,
   largePrCount: 2,
+  scopeBreadth: 1.5, // unique areas/scopes touched
+  revertPenalty: -5, // per PR that got reverted
+  codeCleanup: 0.3, // bonus for net-negative line changes (refactoring)
 };
+
+export type PRType = "feat" | "fix" | "refactor" | "perf" | "chore" | "docs" | "ci" | "test" | "revert" | "style" | "other";
+
+// Weight multiplier per PR type — applied to each PR's contribution to the score
+export const PR_TYPE_WEIGHTS: Record<PRType, number> = {
+  feat: 1.5,
+  fix: 1.2,
+  refactor: 1.1,
+  perf: 1.3,
+  revert: 0.5,
+  chore: 0.5,
+  docs: 0.4,
+  ci: 0.4,
+  test: 0.6,
+  style: 0.3,
+  other: 1.0,
+};
+
+export const PR_TYPE_LABELS: Record<PRType, string> = {
+  feat: "Feature",
+  fix: "Bug Fix",
+  refactor: "Refactor",
+  perf: "Performance",
+  revert: "Revert",
+  chore: "Chore",
+  docs: "Documentation",
+  ci: "CI/CD",
+  test: "Test",
+  style: "Style",
+  other: "Other",
+};
+
+export function detectPRType(title: string): PRType {
+  const match = title.match(/^(\w+)[\(:\s]/);
+  if (!match) return "other";
+  const prefix = match[1].toLowerCase();
+  if (prefix in PR_TYPE_WEIGHTS) return prefix as PRType;
+  return "other";
+}
 
 export const DIMENSION_COLORS = {
   product: "#3b82f6",

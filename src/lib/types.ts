@@ -34,7 +34,13 @@ export interface EngineerMetrics {
   fastPrs: number;
   reviewsGiven: number;
   commentsMade: number;
+  substantiveReviews: number;
+  scopeBreadth: number;
+  revertedPrs: number;
+  netLinesChanged: number;
   mostImpactfulPr: { title: string; url: string };
+  prTypeBreakdown: Record<string, number>;
+  weightedPrCount: number;
 }
 
 export interface ScoredPR {
@@ -49,6 +55,8 @@ export interface ScoredPR {
   reviewCommentCount: number;
   timeToMergeHours: number;
   labels: string[];
+  prType: string;
+  typeWeight: number;
   impactScore: number;
   reasons: string[];
 }
