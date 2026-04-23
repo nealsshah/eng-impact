@@ -102,7 +102,7 @@ export const CATEGORY_CONFIG: Record<
   Closer: {
     colors: "bg-green-100 text-green-700",
     description:
-      "Highest score in Velocity — ships fast with most PRs merged within 48 hours",
+      "Highest score in Velocity — ships fast with most PRs merged within 24 hours",
   },
 };
 

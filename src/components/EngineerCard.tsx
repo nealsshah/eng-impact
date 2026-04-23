@@ -81,8 +81,8 @@ export function EngineerCard({
             style={{ width: `${engineer.normalizedScore}%` }}
           />
         </div>
-        <span className="text-xs font-bold text-gray-600 tabular-nums w-6 text-right">
-          {engineer.normalizedScore}
+        <span className="text-xs font-bold text-gray-600 tabular-nums text-right">
+          {engineer.normalizedScore}<span className="text-gray-400 font-normal">/100</span>
         </span>
       </div>
 

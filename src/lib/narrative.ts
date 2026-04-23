@@ -7,7 +7,7 @@ interface NarrativeRule {
 
 const RULES: NarrativeRule[] = [
   { metric: "avgFilesChanged", label: "Works on large, cross-cutting changes" },
-  { metric: "fastPrs", label: "Ships quickly — most PRs merged within 48 hours" },
+  { metric: "fastPrs", label: "Ships quickly — most PRs merged within 24 hours" },
   { metric: "reviewsGiven", label: "Active code reviewer who unblocks teammates" },
   { metric: "substantiveReviews", label: "Gives thorough reviews — approvals and change requests, not just comments" },
   { metric: "highDiscussionPrs", label: "Tackles complex, high-discussion work" },

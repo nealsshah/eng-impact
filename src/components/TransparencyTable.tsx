@@ -47,7 +47,7 @@ export function TransparencyTable({
               </Link>
             </td>
             <td className="py-2 px-1.5 font-bold tabular-nums text-blue-600">
-              {eng.normalizedScore}
+              {eng.normalizedScore}<span className="text-gray-300 font-normal text-[10px]">/100</span>
             </td>
             <td className="py-2 px-1.5 tabular-nums">{eng.weightedPrCount}</td>
             <td className="py-2 px-1.5 tabular-nums">{eng.scopeBreadth}</td>

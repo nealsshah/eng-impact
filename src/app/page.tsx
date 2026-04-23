@@ -45,6 +45,34 @@ export default async function Home() {
         </p>
       </div>
 
+      {/* Scoring explanation */}
+      <div className="mb-8 bg-white rounded-lg border border-gray-200 p-4">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          How Scoring Works
+        </h2>
+        <p className="text-xs text-gray-500 mb-3">
+          Each engineer is scored across four dimensions based on their last 90 days of merged PRs. The raw sum is normalized 0&ndash;100 relative to the highest-scoring engineer. PRs are weighted by type (feat 1.5x, fix 1.2x, chore 0.5x, etc.). Click any engineer for a full breakdown.
+        </p>
+        <div className="grid grid-cols-4 gap-4 text-xs">
+          <div className="bg-blue-50 rounded-lg p-3">
+            <p className="font-semibold text-blue-700 mb-1">Product</p>
+            <p className="text-gray-500">weighted PRs &times; 2 + avg files &times; 0.5 + scope breadth &times; 1.5</p>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-3">
+            <p className="font-semibold text-purple-700 mb-1">Leverage</p>
+            <p className="text-gray-500">large PRs &times; 2 + complex PRs &times; 3 + cleanup bonus</p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3">
+            <p className="font-semibold text-green-700 mb-1">Velocity</p>
+            <p className="text-gray-500">fast PRs &times; 2 + reverts &times; -5</p>
+          </div>
+          <div className="bg-orange-50 rounded-lg p-3">
+            <p className="font-semibold text-orange-700 mb-1">Collaboration</p>
+            <p className="text-gray-500">reviews &times; 1.5 + substantive reviews &times; 1.0</p>
+          </div>
+        </div>
+      </div>
+
       {/* Top 5 Cards */}
       <section className="mb-8">
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -98,14 +126,6 @@ export default async function Home() {
         </section>
       </div>
 
-      {/* Footer */}
-      <p className="text-[11px] text-gray-400 mt-6 text-center leading-relaxed">
-        Score = Product + Leverage + Velocity + Collaboration, where Product =
-        (weighted_prs&times;2 + avg_files&times;0.5 + scope&times;1.5),
-        Leverage = (large_prs&times;2 + complex_prs&times;3 + cleanup_bonus),
-        Velocity = (fast_prs&times;2 + reverts&times;-5), Collaboration =
-        (reviews&times;1.5 + substantive&times;1.0). Normalized 0&ndash;100.
-      </p>
     </main>
   );
 }
